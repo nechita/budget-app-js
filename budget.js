@@ -1,7 +1,7 @@
 //UI Controller
 var UIController = (function () {
-    var formatNumber = function (num, type) {
-        var numSplit, int, dec, type;
+    var formatNumber = function (num) {
+        var numSplit, int, dec;
 
         num = Math.abs(num);
         num = num.toFixed(2);
@@ -12,8 +12,23 @@ var UIController = (function () {
             int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3);
         }
         dec = numSplit[1];
-        return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
+        return int + '.' + dec;
     };
+
+    var incomeElement = function ({ id, description, value }) {
+        return `<div class="item clearfix" id="inc-${id}">
+        <div class="item__description">${description}</div><div class="right clearfix">
+        <div class="item__value">+${value}</div><div class="item__delete" data-target="inc-${id}">
+        <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>`;
+    };
+
+    var expenseElement = function ({ id, description, value, percentage }) {
+        return `<div class="item clearfix" id="exp-${id}">
+        <div class="item__description">${description}</div><div class="right clearfix">
+        <div class="item__value">-${value}</div><div class="item__delete" data-target="exp-${id}"><div class="item__percentage">${percentage}</div>
+        <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>`;
+    };
+
     return {
         getInput: function () {
             return {
@@ -23,40 +38,43 @@ var UIController = (function () {
             };
         },
 
-        addListItemLocalStorage: function (arr) {
-            arr.map(item => {
-                var html, element;
-                element = document.querySelector('.income__list');
-                html = `<div class="item clearfix" id="inc-${item.id}">
-           <div class="item__description">${item.description}</div><div class="right clearfix">
-           <div class="item__value">+${item.value}</div><div class="item__delete">
-           <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>`;
+        restoreFromLocalStorage: function (arr) {
+            if (!arr.length) return;
+            var html, element;
+
+            arr.forEach(function (item) {
+                var formattedObject = {
+                    ...item,
+                    value: formatNumber(item.value)
+                };
+                if (formattedObject.percentage !== undefined) {
+                    element = document.querySelector('.expenses__list');
+                    html = expenseElement(formattedObject);
+                } else {
+                    element = document.querySelector('.income__list');
+                    html = incomeElement(formattedObject);
+                }
                 element.insertAdjacentHTML('beforeend', html);
             });
-
         },
 
         addListItem: function (obj, type) {
             // Create HTML strings with placeholder text
-
-            var html, newHtml, element;
+            var html, element;
+            var formattedObject = {
+                ...obj,
+                value: formatNumber(obj.value)
+            };
 
             if (type === 'inc') {
                 element = document.querySelector('.income__list');
-                html = '<div class="item clearfix" id="inc-%id%"> <div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
-
+                html = incomeElement(formattedObject);
             } else if (type === 'exp') {
                 element = document.querySelector('.expenses__list');
-                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                html = expenseElement(formattedObject);
             }
-
-
-            // Replace placeholder with data
-            newHtml = html.replace('%id%', obj.id);
-            newHtml = newHtml.replace('%description%', obj.description);
-            newHtml = newHtml.replace('%value%', formatNumber(obj.value));
             // Insert the HTML into the DOM
-            element.insertAdjacentHTML('beforeend', newHtml);
+            element.insertAdjacentHTML('beforeend', html);
         },
 
         deleteListItem: function (selectorId) {
@@ -68,7 +86,7 @@ var UIController = (function () {
             var inputs, inputFields;
             inputs = document.querySelectorAll('input');
             inputFields = Array.prototype.slice.call(inputs);
-            inputFields.forEach(element => {
+            inputFields.forEach(function (element) {
                 element.value = '';
             });
             inputFields[0].focus();
@@ -90,10 +108,6 @@ var UIController = (function () {
             } else {
                 divPercentage.textContent = `---`;
             }
-
-        },
-        displayItems: function (obj) {
-
         },
         displayPercentage: function (percentages) {
             var percentageFields = document.querySelectorAll('.item__percentage');
@@ -109,7 +123,6 @@ var UIController = (function () {
                     item.textContent = '---';
                 }
             });
-
         },
         displayMonth: function () {
             var element, date, month, year;
@@ -117,23 +130,22 @@ var UIController = (function () {
             date = new Date();
             year = date.getFullYear();
             month = [];
-            month[0] = "January";
-            month[1] = "February";
-            month[2] = "March";
-            month[3] = "April";
-            month[4] = "May";
-            month[5] = "June";
-            month[6] = "July";
-            month[7] = "August";
-            month[8] = "September";
-            month[9] = "October";
-            month[10] = "November";
-            month[11] = "December";
+            month[0] = 'January';
+            month[1] = 'February';
+            month[2] = 'March';
+            month[3] = 'April';
+            month[4] = 'May';
+            month[5] = 'June';
+            month[6] = 'July';
+            month[7] = 'August';
+            month[8] = 'September';
+            month[9] = 'October';
+            month[10] = 'November';
+            month[11] = 'December';
             element.textContent = `${month[date.getMonth()]} ${year}`;
         }
-    }
+    };
 })();
-
 
 //Budget Controller
 var budgetController = (function () {
@@ -144,13 +156,11 @@ var budgetController = (function () {
         this.percentage = -1;
     };
     Expense.prototype.calcPercentage = function (totalIncome) {
-        if (totalIncome > 0) {
-            this.percentage = Math.round((this.value / totalIncome) * 100);
-        } else {
-            this.percentage = -1;
-        }
+        if (totalIncome < 0) return;
+        this.percentage = Math.round(this.value / totalIncome * 100);
     };
     Expense.prototype.getPercentage = function () {
+        this.percentage = this.percentage || -1;
         return this.percentage;
     };
 
@@ -161,11 +171,12 @@ var budgetController = (function () {
     };
     var calculateTotal = function (type) {
         var sum = 0;
-        data.allItems[type].forEach(item => {
-            return sum += item.value;
-        })
+        data.allItems[type].forEach(function (item) {
+            return (sum += item.value);
+        });
         data.totals[type] = sum;
-    }
+    };
+
     var data = {
         allItems: {
             exp: [],
@@ -177,36 +188,44 @@ var budgetController = (function () {
         },
         budget: 0,
         percentage: -1
-    }
+    };
 
+    var dataStorage = localStorage.getItem('myData');
+
+    if (dataStorage !== null) {
+        data = {
+            ...JSON.parse(dataStorage)
+        };
+    }
 
     return {
         addItem: function (type, des, val) {
             var newItem, ID;
-            //Create new ID
+            // Create new ID
             if (data.allItems[type].length > 0) {
                 ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
             } else {
                 ID = 0;
             }
 
-            //Create new item based on type
+            // Create new item based on type
             if (type === 'exp') {
                 newItem = new Expense(ID, des, val);
+                newItem.calcPercentage(data.totals.inc);
             } else if (type === 'inc') {
                 newItem = new Income(ID, des, val);
             }
-            //Push item into data structure array
-            data.allItems[type].push(newItem);
+
+            // Push item into data structure array
+            data.allItems[type] = [...data.allItems[type], newItem];
             return newItem;
         },
         deleteItem: function (type, id) {
-            var ids, index;
-            ids = data.allItems[type].map(item => item.id);
-            index = ids.indexOf(id);
-            if (index !== -1) {
-                data.allItems[type].splice(index, 1);
-            }
+            data.allItems[type] = [
+                ...data.allItems[type].filter(function (item) {
+                    item.id !== parseInt(id, 10);
+                })
+            ];
         },
         calculateBudget: function () {
             // Calculate total income and expenses
@@ -214,22 +233,24 @@ var budgetController = (function () {
             calculateTotal('inc');
             // Calculate the budget:income - expenses
             data.budget = data.totals.inc - data.totals.exp;
-            //Calculate the percentage of income we spent
+            // Calculate the percentage of income we spent
             if (data.totals.inc > 0) {
-                data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+                data.percentage = Math.round(data.totals.exp / data.totals.inc * 100);
             } else {
                 data.percentage = -1;
             }
-
-
         },
         calculatePercentages: function () {
-            data.allItems.exp.forEach(item => {
-                item.calcPercentage(data.totals.inc);
+            data.allItems.exp.forEach(function (item) {
+                var expenseObj = new Expense(item.id, item.description, item.value);
+                return expenseObj.calcPercentage(data.totals.inc);
             });
         },
         getPercentages: function () {
-            var allPerc = data.allItems.exp.map(item => item.getPercentage());
+            var allPerc = data.allItems.exp.map(function (item) {
+                var expenseObj = new Expense(item.id, item.description, item.value);
+                return expenseObj.getPercentage();
+            });
             return allPerc;
         },
 
@@ -239,14 +260,13 @@ var budgetController = (function () {
                 totalIncome: data.totals.inc,
                 totalExpenses: data.totals.exp,
                 percentage: data.percentage
-            }
+            };
         },
 
         setLocalStorage: function () {
-            localStorage.setItem("myData", JSON.stringify(data));
-        },
-    }
-
+            localStorage.setItem('myData', JSON.stringify(data));
+        }
+    };
 })();
 
 // General Controller
@@ -259,7 +279,7 @@ var controller = (function (UICtrl, BudgetCtrl) {
             }
         });
         document.querySelector('.container').addEventListener('click', ctrlDeleteItem);
-    }
+    };
     var updateBudget = function () {
         // Calculate the budget
         BudgetCtrl.calculateBudget();
@@ -267,6 +287,7 @@ var controller = (function (UICtrl, BudgetCtrl) {
         var budget = BudgetCtrl.getBudget();
         //Display the budget
         UICtrl.displayBudget(budget);
+        BudgetCtrl.setLocalStorage();
     };
 
     var updatePercentages = function () {
@@ -276,9 +297,8 @@ var controller = (function (UICtrl, BudgetCtrl) {
         var percentages = BudgetCtrl.getPercentages();
         //3. Update UI
         UICtrl.displayPercentage(percentages);
-    }
+    };
     var ctrlAddItem = function () {
-
         //1.Get the input data
         var input = UICtrl.getInput();
 
@@ -293,37 +313,33 @@ var controller = (function (UICtrl, BudgetCtrl) {
             updateBudget();
             //6. Update percentages
             updatePercentages();
-        };
-    }
+        }
+    };
     var ctrlDeleteItem = function (e) {
-        var itemId, splitId;
-        itemId = e.target.parentNode.parentNode.parentNode.parentNode.id;
-        if (itemId) {
+        var target = e.target;
+        if (target && target.className === 'ion-ios-close-outline') {
             // split the string
-            splitId = itemId.split('-')
-            type = splitId[0];
-            ID = parseInt(splitId[1]);
-            console.log(splitId);
-            console.log(type);
+            var parent = target.parentNode.parentNode; // .item__delete
+            var [type, id] = parent.dataset.target.split('-');
             //1. Delete the item from the structure
-            BudgetCtrl.deleteItem(type, ID);
+            BudgetCtrl.deleteItem(type, id);
             //2. Delete the item from UI
-            UICtrl.deleteListItem(itemId);
+            UICtrl.deleteListItem(parent.dataset.target);
             //3. Update budget
             updateBudget();
             //4. Update percentages
             updatePercentages();
         }
-    }
+    };
     return {
         init: function () {
             console.log('app started');
             UICtrl.displayMonth();
 
+            var myData = localStorage.getItem('myData');
 
-            if (localStorage.getItem("myData") !== null) {
-                var dataStorage = JSON.parse(localStorage.getItem("myData"));
-                console.log(dataStorage.allItems);
+            if (myData !== null) {
+                var dataStorage = JSON.parse(myData);
                 UICtrl.displayBudget({
                     /* allItems: dataStorage.allItems,   */
                     budget: dataStorage.budget,
@@ -331,11 +347,10 @@ var controller = (function (UICtrl, BudgetCtrl) {
                     totalIncome: dataStorage.totals.inc,
                     totalExpenses: dataStorage.totals.exp
                 });
-                var income = dataStorage.allItems.inc;
-                UICtrl.addListItemLocalStorage(income);
+                var { inc: income, exp: expense } = dataStorage.allItems;
 
-
-
+                UICtrl.restoreFromLocalStorage(income);
+                UICtrl.restoreFromLocalStorage(expense);
             } else {
                 UICtrl.displayBudget({
                     budget: 0,
@@ -343,12 +358,11 @@ var controller = (function (UICtrl, BudgetCtrl) {
                     totalExpenses: 0,
                     percentage: -1
                 });
-            };
+            }
 
             setupEventListeners();
         }
-    }
-
+    };
 })(UIController, budgetController);
 
 controller.init();
